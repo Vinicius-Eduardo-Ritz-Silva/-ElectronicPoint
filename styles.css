@@ -1,0 +1,168 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.horario-atual {
+    font-size: 2.5em;
+    text-align: center;
+    margin: 20px 0;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.botoes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+button {
+    padding: 15px;
+    font-size: 1em;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #3498db;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+#primeiraEntrada { background-color: #2ecc71; }
+#primeiraEntrada:hover { background-color: #27ae60; }
+
+#primeiraSaida { background-color: #e74c3c; }
+#primeiraSaida:hover { background-color: #c0392b; }
+
+#segundaEntrada { background-color: #2ecc71; }
+#segundaEntrada:hover { background-color: #27ae60; }
+
+#segundaSaida { background-color: #e74c3c; }
+#segundaSaida:hover { background-color: #c0392b; }
+
+#outro { 
+    grid-column: 1 / -1;
+    background-color: #9b59b6;
+}
+
+#outro:hover {
+    background-color: #8e44ad;
+}
+
+.registros {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.registros h2 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.registro-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+}
+
+.registro-item:last-child {
+    border-bottom: none;
+}
+
+.horario {
+    font-weight: bold;
+    color: #7f8c8d;
+}
+
+.descricao {
+    color: #2c3e50;
+}
+
+#exportarTxt {
+    margin-top: 20px;
+    width: 100%;
+    background-color: #f39c12;
+}
+
+#exportarTxt:hover {
+    background-color: #d35400;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 5px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#descricaoPonto {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#confirmarPonto {
+    width: 100%;
+    background-color: #2ecc71;
+}
+
+#confirmarPonto:hover {
+    background-color: #27ae60;
+}

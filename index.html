@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponto Eletrônico</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Ponto Eletrônico</h1>
+        <div class="horario-atual" id="horarioAtual">--:--:--</div>
+        
+        <div class="botoes">
+            <button id="primeiraEntrada">Primeira Entrada</button>
+            <button id="primeiraSaida">Primeira Saída</button>
+            <button id="segundaEntrada">Segunda Entrada</button>
+            <button id="segundaSaida">Segunda Saída</button>
+            <button id="outro">Outro</button>
+        </div>
+        
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Registrar Ponto</h3>
+                <input type="text" id="descricaoPonto" placeholder="Digite a descrição">
+                <button id="confirmarPonto">Confirmar</button>
+            </div>
+        </div>
+        
+        <div class="registros">
+            <h2>Registros de Hoje</h2>
+            <div id="listaRegistros"></div>
+            <button id="exportarTxt">Exportar para TXT</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

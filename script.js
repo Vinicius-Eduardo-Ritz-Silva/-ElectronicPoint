@@ -1,0 +1,154 @@
+// Elementos da interface
+const horarioAtual = document.getElementById('horarioAtual');
+const primeiraEntradaBtn = document.getElementById('primeiraEntrada');
+const primeiraSaidaBtn = document.getElementById('primeiraSaida');
+const segundaEntradaBtn = document.getElementById('segundaEntrada');
+const segundaSaidaBtn = document.getElementById('segundaSaida');
+const outroBtn = document.getElementById('outro');
+const listaRegistros = document.getElementById('listaRegistros');
+const exportarTxtBtn = document.getElementById('exportarTxt');
+const modal = document.getElementById('modal');
+const closeModal = document.querySelector('.close');
+const confirmarPonto = document.getElementById('confirmarPonto');
+const descricaoPonto = document.getElementById('descricaoPonto');
+
+// Array para armazenar os registros
+let registros = [];
+
+// Atualiza o relógio em tempo real
+function atualizarRelogio() {
+    const agora = new Date();
+    const horaFormatada = agora.toLocaleTimeString('pt-BR');
+    horarioAtual.textContent = horaFormatada;
+}
+
+// Formata a data para exibição
+function formatarDataHora(data) {
+    return data.toLocaleString('pt-BR');
+}
+
+// Adiciona um novo registro
+function adicionarRegistro(tipo, descricao = '') {
+    const agora = new Date();
+    const registro = {
+        dataHora: agora,
+        tipo: tipo,
+        descricao: descricao || tipo
+    };
+    
+    registros.push(registro);
+    salvarRegistros();
+    atualizarListaRegistros();
+}
+
+// Salva os registros no localStorage
+function salvarRegistros() {
+    const hoje = new Date().toISOString().split('T')[0];
+    const chave = `ponto_eletronico_${hoje}`;
+    localStorage.setItem(chave, JSON.stringify(registros));
+}
+
+// Carrega os registros do localStorage
+function carregarRegistros() {
+    const hoje = new Date().toISOString().split('T')[0];
+    const chave = `ponto_eletronico_${hoje}`;
+    const registrosSalvos = localStorage.getItem(chave);
+    
+    if (registrosSalvos) {
+        registros = JSON.parse(registrosSalvos).map(reg => ({
+            ...reg,
+            dataHora: new Date(reg.dataHora)
+        }));
+        atualizarListaRegistros();
+    }
+}
+
+// Atualiza a lista de registros na tela
+function atualizarListaRegistros() {
+    listaRegistros.innerHTML = '';
+    
+    if (registros.length === 0) {
+        listaRegistros.innerHTML = '<p>Nenhum registro encontrado para hoje.</p>';
+        return;
+    }
+    
+    registros.forEach(registro => {
+        const item = document.createElement('div');
+        item.className = 'registro-item';
+        item.innerHTML = `
+            <span class="horario">${registro.dataHora.toLocaleTimeString('pt-BR')}</span>
+            <span class="descricao">${registro.descricao}</span>
+        `;
+        listaRegistros.appendChild(item);
+    });
+}
+
+// Exporta os registros para um arquivo de texto
+function exportarParaTxt() {
+    if (registros.length === 0) {
+        alert('Não há registros para exportar!');
+        return;
+    }
+    
+    let conteudo = 'Registros de Ponto Eletrônico\n';
+    conteudo += 'Data: ' + new Date().toLocaleDateString('pt-BR') + '\n\n';
+    
+    registros.forEach(registro => {
+        conteudo += `${registro.dataHora.toLocaleString('pt-BR')} - ${registro.descricao}\n`;
+    });
+    
+    const blob = new Blob([conteudo], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ponto_eletronico_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Event Listeners
+primeiraEntradaBtn.addEventListener('click', () => adicionarRegistro('Primeira Entrada'));
+primeiraSaidaBtn.addEventListener('click', () => adicionarRegistro('Primeira Saída'));
+segundaEntradaBtn.addEventListener('click', () => adicionarRegistro('Segunda Entrada'));
+segundaSaidaBtn.addEventListener('click', () => adicionarRegistro('Segunda Saída'));
+
+outroBtn.addEventListener('click', () => {
+    modal.style.display = 'block';
+    descricaoPonto.focus();
+});
+
+closeModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+    descricaoPonto.value = '';
+});
+
+confirmarPonto.addEventListener('click', () => {
+    const descricao = descricaoPonto.value.trim();
+    if (descricao) {
+        adicionarRegistro('Outro', descricao);
+        modal.style.display = 'none';
+        descricaoPonto.value = '';
+    }
+});
+
+descricaoPonto.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        confirmarPonto.click();
+    }
+});
+
+exportarTxtBtn.addEventListener('click', exportarParaTxt);
+
+// Fechar o modal ao clicar fora dele
+window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+// Inicialização
+setInterval(atualizarRelogio, 1000);
+atualizarRelogio();
+carregarRegistros();
