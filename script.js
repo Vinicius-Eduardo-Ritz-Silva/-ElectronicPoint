@@ -7,6 +7,7 @@ const segundaSaidaBtn = document.getElementById('segundaSaida');
 const outroBtn = document.getElementById('outro');
 const listaRegistros = document.getElementById('listaRegistros');
 const exportarTxtBtn = document.getElementById('exportarTxt');
+const saldoHorasElement = document.getElementById('saldoHoras');
 const modal = document.getElementById('modal');
 const modalEdicao = document.getElementById('modalEdicao');
 const closeModal = document.querySelector('.close');
@@ -71,6 +72,7 @@ function atualizarListaRegistros() {
     
     if (registros.length === 0) {
         listaRegistros.innerHTML = '<p>Nenhum registro encontrado para hoje.</p>';
+        calcularSaldoHoras(); // Atualiza o saldo mesmo sem registros
         return;
     }
     
@@ -92,6 +94,9 @@ function atualizarListaRegistros() {
         `;
         listaRegistros.appendChild(item);
     });
+
+    // Atualiza o saldo de horas
+    calcularSaldoHoras();
 
     // Adiciona eventos aos botões
     document.querySelectorAll('.btn-editar').forEach(btn => {
@@ -174,6 +179,65 @@ function excluirRegistro(index) {
     registros.splice(index, 1);
     salvarRegistros();
     atualizarListaRegistros();
+}
+
+// Função para calcular o saldo de horas
+function calcularSaldoHoras() {
+    // Ordena os registros por data/hora
+    const registrosOrdenados = [...registros].sort((a, b) => a.dataHora - b.dataHora);
+    
+    // Filtra apenas os registros de entrada/saída
+    const registrosPonto = registrosOrdenados.filter(reg => 
+        ['Primeira Entrada', 'Primeira Saída', 'Segunda Entrada', 'Segunda Saída'].includes(reg.tipo)
+    );
+    
+    // Se não há registros suficientes, retorna
+    if (registrosPonto.length < 2) {
+        saldoHorasElement.textContent = '--:--';
+        saldoHorasElement.className = '';
+        return;
+    }
+    
+    // Calcula o tempo trabalhado
+    let tempoTrabalhadoMs = 0;
+    let ultimoTipo = '';
+    let ultimoHorario = null;
+    
+    registrosPonto.forEach(registro => {
+        if (registro.tipo === 'Primeira Entrada' || registro.tipo === 'Segunda Entrada') {
+            ultimoHorario = registro.dataHora;
+            ultimoTipo = 'entrada';
+        } else if ((registro.tipo === 'Primeira Saída' || registro.tipo === 'Segunda Saída') && ultimoTipo === 'entrada') {
+            if (ultimoHorario) {
+                tempoTrabalhadoMs += registro.dataHora - ultimoHorario;
+                ultimoHorario = null;
+                ultimoTipo = 'saida';
+            }
+        }
+    });
+    
+    // Calcula o saldo (8 horas CLT = 8 * 60 * 60 * 1000 ms)
+    const oitoHorasMs = 8 * 60 * 60 * 1000;
+    const saldoMs = tempoTrabalhadoMs - oitoHorasMs;
+    
+    // Formata o saldo
+    const horas = Math.floor(Math.abs(saldoMs) / (1000 * 60 * 60));
+    const minutos = Math.floor((Math.abs(saldoMs) % (1000 * 60 * 60)) / (1000 * 60));
+    const sinal = saldoMs >= 0 ? '+' : '-';
+    const saldoFormatado = `${sinal}${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+    
+    // Atualiza o elemento
+    saldoHorasElement.textContent = saldoFormatado;
+    
+    // Aplica a classe de estilo apropriada
+    saldoHorasElement.className = '';
+    if (saldoMs > 0) {
+        saldoHorasElement.classList.add('saldo-positivo');
+    } else if (saldoMs < 0) {
+        saldoHorasElement.classList.add('saldo-negativo');
+    } else {
+        saldoHorasElement.classList.add('saldo-zerado');
+    }
 }
 
 // Exporta os registros para um arquivo de texto
