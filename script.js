@@ -8,7 +8,9 @@ const outroBtn = document.getElementById('outro');
 const listaRegistros = document.getElementById('listaRegistros');
 const exportarTxtBtn = document.getElementById('exportarTxt');
 const modal = document.getElementById('modal');
+const modalEdicao = document.getElementById('modalEdicao');
 const closeModal = document.querySelector('.close');
+const closeModalEdicao = document.querySelector('.close-edicao');
 const confirmarPonto = document.getElementById('confirmarPonto');
 const descricaoPonto = document.getElementById('descricaoPonto');
 
@@ -72,15 +74,106 @@ function atualizarListaRegistros() {
         return;
     }
     
-    registros.forEach(registro => {
+    registros.forEach((registro, index) => {
         const item = document.createElement('div');
         item.className = 'registro-item';
+        item.dataset.index = index;
         item.innerHTML = `
             <span class="horario">${registro.dataHora.toLocaleTimeString('pt-BR')}</span>
             <span class="descricao">${registro.descricao}</span>
+            <div class="acoes">
+                <button class="btn-editar" data-index="${index}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-excluir" data-index="${index}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         `;
         listaRegistros.appendChild(item);
     });
+
+    // Adiciona eventos aos botões
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(btn.dataset.index);
+            abrirModalEdicao(index);
+        });
+    });
+
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(btn.dataset.index);
+            if (confirm('Tem certeza que deseja excluir este registro?')) {
+                excluirRegistro(index);
+            }
+        });
+    });
+}
+
+// Abre o modal para edição do registro
+function abrirModalEdicao(index) {
+    const registro = registros[index];
+    const modalEdicao = document.getElementById('modalEdicao');
+    const dataHoraInput = document.getElementById('dataHoraEdicao');
+    const descricaoEdicao = document.getElementById('descricaoEdicao');
+    const salvarEdicao = document.getElementById('salvarEdicao');
+    const cancelarEdicao = document.getElementById('cancelarEdicao');
+    
+    // Formata a data para o input datetime-local
+    const dataHora = new Date(registro.dataHora);
+    const timezoneOffset = dataHora.getTimezoneOffset() * 60000; // em milissegundos
+    const localISOTime = (new Date(dataHora - timezoneOffset)).toISOString().slice(0, 16);
+    
+    dataHoraInput.value = localISOTime;
+    descricaoEdicao.value = registro.descricao;
+    
+    // Remove eventos anteriores para evitar duplicação
+    const novaSalvarEdicao = salvarEdicao.cloneNode(true);
+    const novoCancelarEdicao = cancelarEdicao.cloneNode(true);
+    
+    salvarEdicao.parentNode.replaceChild(novaSalvarEdicao, salvarEdicao);
+    cancelarEdicao.parentNode.replaceChild(novoCancelarEdicao, cancelarEdicao);
+    
+    // Adiciona os novos eventos
+    novaSalvarEdicao.addEventListener('click', () => {
+        const novaDataHora = new Date(dataHoraInput.value);
+        const novaDescricao = descricaoEdicao.value.trim();
+        
+        if (novaDescricao) {
+            editarRegistro(index, novaDataHora, novaDescricao);
+            modalEdicao.style.display = 'none';
+        } else {
+            alert('Por favor, preencha a descrição.');
+        }
+    });
+    
+    novoCancelarEdicao.addEventListener('click', () => {
+        modalEdicao.style.display = 'none';
+    });
+    
+    modalEdicao.style.display = 'block';
+    descricaoEdicao.focus();
+}
+
+// Edita um registro existente
+function editarRegistro(index, novaDataHora, novaDescricao) {
+    registros[index] = {
+        dataHora: novaDataHora,
+        tipo: registros[index].tipo,
+        descricao: novaDescricao
+    };
+    salvarRegistros();
+    atualizarListaRegistros();
+}
+
+// Exclui um registro
+function excluirRegistro(index) {
+    registros.splice(index, 1);
+    salvarRegistros();
+    atualizarListaRegistros();
 }
 
 // Exporta os registros para um arquivo de texto
