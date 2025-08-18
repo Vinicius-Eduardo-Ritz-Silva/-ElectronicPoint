@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ponto Eletrônico</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -19,12 +20,33 @@
             <button id="outro">Outro</button>
         </div>
         
+        <!-- Modal para novo registro -->
         <div id="modal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
                 <h3>Registrar Ponto</h3>
                 <input type="text" id="descricaoPonto" placeholder="Digite a descrição">
                 <button id="confirmarPonto">Confirmar</button>
+            </div>
+        </div>
+        
+        <!-- Modal para edição de registro -->
+        <div id="modalEdicao" class="modal">
+            <div class="modal-content">
+                <span class="close close-edicao">&times;</span>
+                <h3>Editar Registro</h3>
+                <div class="form-group">
+                    <label for="dataHoraEdicao">Data e Hora:</label>
+                    <input type="datetime-local" id="dataHoraEdicao" required>
+                </div>
+                <div class="form-group">
+                    <label for="descricaoEdicao">Descrição:</label>
+                    <input type="text" id="descricaoEdicao" placeholder="Digite a descrição" required>
+                </div>
+                <div class="botoes-modal">
+                    <button id="cancelarEdicao" class="btn-cancelar">Cancelar</button>
+                    <button id="salvarEdicao" class="btn-salvar">Salvar</button>
+                </div>
             </div>
         </div>
         
