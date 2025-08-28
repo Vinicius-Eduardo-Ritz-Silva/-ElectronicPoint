@@ -183,6 +183,9 @@ function excluirRegistro(index) {
 
 // Função para calcular o saldo de horas
 function calcularSaldoHoras() {
+    const sugestaoSaidaElement = document.getElementById('sugestaoSaida');
+    const oitoHorasMs = 8 * 60 * 60 * 1000; // 8 horas em milissegundos
+    
     // Ordena os registros por data/hora
     const registrosOrdenados = [...registros].sort((a, b) => a.dataHora - b.dataHora);
     
@@ -195,6 +198,7 @@ function calcularSaldoHoras() {
     if (registrosPonto.length < 2) {
         saldoHorasElement.textContent = '--:--';
         saldoHorasElement.className = '';
+        sugestaoSaidaElement.textContent = '';
         return;
     }
     
@@ -203,21 +207,33 @@ function calcularSaldoHoras() {
     let ultimoTipo = '';
     let ultimoHorario = null;
     
+    // Array para armazenar os períodos trabalhados
+    const periodosTrabalhados = [];
+    
     registrosPonto.forEach(registro => {
         if (registro.tipo === 'Primeira Entrada' || registro.tipo === 'Segunda Entrada') {
             ultimoHorario = registro.dataHora;
             ultimoTipo = 'entrada';
         } else if ((registro.tipo === 'Primeira Saída' || registro.tipo === 'Segunda Saída') && ultimoTipo === 'entrada') {
             if (ultimoHorario) {
-                tempoTrabalhadoMs += registro.dataHora - ultimoHorario;
+                const periodo = registro.dataHora - ultimoHorario;
+                tempoTrabalhadoMs += periodo;
+                periodosTrabalhados.push({ inicio: ultimoHorario, fim: registro.dataHora });
                 ultimoHorario = null;
                 ultimoTipo = 'saida';
             }
         }
     });
     
-    // Calcula o saldo (8 horas CLT = 8 * 60 * 60 * 1000 ms)
-    const oitoHorasMs = 8 * 60 * 60 * 1000;
+    // Se está em um período de trabalho ativo (entrada sem saída)
+    if (ultimoHorario && ultimoTipo === 'entrada') {
+        const agora = new Date();
+        const periodoAtual = agora - ultimoHorario;
+        tempoTrabalhadoMs += periodoAtual;
+        periodosTrabalhados.push({ inicio: ultimoHorario, fim: agora });
+    }
+    
+    // Calcula o saldo
     const saldoMs = tempoTrabalhadoMs - oitoHorasMs;
     
     // Formata o saldo
@@ -226,7 +242,7 @@ function calcularSaldoHoras() {
     const sinal = saldoMs >= 0 ? '+' : '-';
     const saldoFormatado = `${sinal}${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     
-    // Atualiza o elemento
+    // Atualiza o elemento de saldo
     saldoHorasElement.textContent = saldoFormatado;
     
     // Aplica a classe de estilo apropriada
@@ -237,6 +253,25 @@ function calcularSaldoHoras() {
         saldoHorasElement.classList.add('saldo-negativo');
     } else {
         saldoHorasElement.classList.add('saldo-zerado');
+    }
+    
+    // Calcula e exibe a sugestão de saída
+    if (periodosTrabalhados.length > 0 && ultimoHorario && ultimoTipo === 'entrada') {
+        // Tempo restante para completar 8 horas
+        const tempoRestanteMs = Math.max(0, oitoHorasMs - tempoTrabalhadoMs);
+        
+        if (tempoRestanteMs > 0) {
+            // Calcula a hora de saída sugerida
+            const agora = new Date();
+            const horaSugerida = new Date(agora.getTime() + tempoRestanteMs);
+            const horaFormatada = horaSugerida.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            sugestaoSaidaElement.textContent = `Sugestão de saída: ${horaFormatada} (8h completas)`;
+        } else {
+            sugestaoSaidaElement.textContent = 'Já completou as 8h de trabalho';
+        }
+    } else {
+        sugestaoSaidaElement.textContent = '';
     }
 }
 
