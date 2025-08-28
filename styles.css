@@ -199,3 +199,23 @@ button:hover {
 .saldo-zerado {
     color: #3498db !important;
 }
+
+.sugestao-saida {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #2c3e50;
+    font-style: italic;
+    text-align: center;
+}
+
+.saldo-positivo .sugestao-saida {
+    color: #27ae60;
+}
+
+.saldo-negativo .sugestao-saida {
+    color: #e74c3c;
+}
+
+.saldo-zerado .sugestao-saida {
+    color: #2c3e50;
+}
