@@ -53,25 +53,34 @@ button:hover {
     background-color: #2980b9;
 }
 
-#primeiraEntrada { background-color: #2ecc71; }
-#primeiraEntrada:hover { background-color: #27ae60; }
-
-#primeiraSaida { background-color: #e74c3c; }
-#primeiraSaida:hover { background-color: #c0392b; }
-
-#segundaEntrada { background-color: #2ecc71; }
-#segundaEntrada:hover { background-color: #27ae60; }
-
-#segundaSaida { background-color: #e74c3c; }
-#segundaSaida:hover { background-color: #c0392b; }
-
-#outro { 
+/* Estilos para o botão de registro principal */
+#registrarPonto {
     grid-column: 1 / -1;
-    background-color: #9b59b6;
+    font-size: 1.2em;
+    padding: 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    width: 100%;
 }
 
-#outro:hover {
-    background-color: #8e44ad;
+#registrarPonto.entrada {
+    background-color: #2ecc71;
+}
+
+#registrarPonto.entrada:hover {
+    background-color: #27ae60;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#registrarPonto.saida {
+    background-color: #e74c3c;
+}
+
+#registrarPonto.saida:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .registros {
