@@ -1,19 +1,11 @@
 // Elementos da interface
 const horarioAtual = document.getElementById('horarioAtual');
-const primeiraEntradaBtn = document.getElementById('primeiraEntrada');
-const primeiraSaidaBtn = document.getElementById('primeiraSaida');
-const segundaEntradaBtn = document.getElementById('segundaEntrada');
-const segundaSaidaBtn = document.getElementById('segundaSaida');
-const outroBtn = document.getElementById('outro');
+const registrarPontoBtn = document.getElementById('registrarPonto');
 const listaRegistros = document.getElementById('listaRegistros');
 const exportarTxtBtn = document.getElementById('exportarTxt');
 const saldoHorasElement = document.getElementById('saldoHoras');
-const modal = document.getElementById('modal');
 const modalEdicao = document.getElementById('modalEdicao');
-const closeModal = document.querySelector('.close');
 const closeModalEdicao = document.querySelector('.close-edicao');
-const confirmarPonto = document.getElementById('confirmarPonto');
-const descricaoPonto = document.getElementById('descricaoPonto');
 
 // Array para armazenar os registros
 let registros = [];
@@ -30,18 +22,54 @@ function formatarDataHora(data) {
     return data.toLocaleString('pt-BR');
 }
 
+// Determina o próximo tipo de registro com base no último registro
+function determinarProximoTipo() {
+    if (registros.length === 0) return 'Primeira Entrada';
+    
+    const ultimoRegistro = registros[registros.length - 1].tipo;
+    
+    switch(ultimoRegistro) {
+        case 'Primeira Entrada': return 'Primeira Saída';
+        case 'Primeira Saída': return 'Segunda Entrada';
+        case 'Segunda Entrada': return 'Segunda Saída';
+        case 'Segunda Saída': return 'Primeira Entrada';
+        default: return 'Primeira Entrada';
+    }
+}
+
+// Atualiza o texto do botão com base no próximo tipo de registro
+function atualizarTextoBotao() {
+    const proximoTipo = determinarProximoTipo();
+    registrarPontoBtn.textContent = `Registrar ${proximoTipo}`;
+    
+    // Atualiza a classe do botão para refletir se é entrada ou saída
+    registrarPontoBtn.className = 'btn-registrar ' + 
+        (proximoTipo.includes('Entrada') ? 'entrada' : 'saida');
+}
+
 // Adiciona um novo registro
-function adicionarRegistro(tipo, descricao = '') {
+function adicionarRegistro(tipo = null, descricao = '') {
+    const proximoTipo = tipo || determinarProximoTipo();
     const agora = new Date();
+    
+    // Se for o primeiro registro do dia, limpa registros antigos
+    if (registros.length === 0) {
+        const hoje = new Date().toISOString().split('T')[0];
+        const chave = `ponto_eletronico_${hoje}`;
+        localStorage.setItem(chave, JSON.stringify([]));
+    }
+    
     const registro = {
         dataHora: agora,
-        tipo: tipo,
-        descricao: descricao || tipo
+        tipo: proximoTipo,
+        descricao: descricao || proximoTipo
     };
     
     registros.push(registro);
     salvarRegistros();
     atualizarListaRegistros();
+    atualizarTextoBotao();
+    
 }
 
 // Salva os registros no localStorage
@@ -64,6 +92,9 @@ function carregarRegistros() {
         }));
         atualizarListaRegistros();
     }
+    
+    // Atualiza o texto do botão ao carregar os registros
+    atualizarTextoBotao();
 }
 
 // Atualiza a lista de registros na tela
@@ -301,46 +332,32 @@ function exportarParaTxt() {
 }
 
 // Event Listeners
-primeiraEntradaBtn.addEventListener('click', () => adicionarRegistro('Primeira Entrada'));
-primeiraSaidaBtn.addEventListener('click', () => adicionarRegistro('Primeira Saída'));
-segundaEntradaBtn.addEventListener('click', () => adicionarRegistro('Segunda Entrada'));
-segundaSaidaBtn.addEventListener('click', () => adicionarRegistro('Segunda Saída'));
-
-outroBtn.addEventListener('click', () => {
-    modal.style.display = 'block';
-    descricaoPonto.focus();
+registrarPontoBtn.addEventListener('click', () => {
+    adicionarRegistro();
 });
 
-closeModal.addEventListener('click', () => {
-    modal.style.display = 'none';
-    descricaoPonto.value = '';
-});
-
-confirmarPonto.addEventListener('click', () => {
-    const descricao = descricaoPonto.value.trim();
-    if (descricao) {
-        adicionarRegistro('Outro', descricao);
-        modal.style.display = 'none';
-        descricaoPonto.value = '';
+// Fecha o modal de edição ao clicar fora dele
+window.addEventListener('click', (event) => {
+    if (event.target === modalEdicao) {
+        modalEdicao.style.display = 'none';
     }
 });
 
-descricaoPonto.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        confirmarPonto.click();
-    }
+// Fecha o modal de edição
+closeModalEdicao.addEventListener('click', () => {
+    modalEdicao.style.display = 'none';
 });
 
+// Exporta para TXT
 exportarTxtBtn.addEventListener('click', exportarParaTxt);
 
-// Fechar o modal ao clicar fora dele
-window.addEventListener('click', (e) => {
-    if (e.target === modal) {
-        modal.style.display = 'none';
-    }
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    carregarRegistros();
+    setInterval(atualizarRelogio, 1000);
+    atualizarRelogio();
 });
 
 // Inicialização
 setInterval(atualizarRelogio, 1000);
 atualizarRelogio();
-carregarRegistros();
