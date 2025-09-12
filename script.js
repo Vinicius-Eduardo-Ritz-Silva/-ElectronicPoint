@@ -9,12 +9,17 @@ const closeModalEdicao = document.querySelector('.close-edicao');
 
 // Array para armazenar os registros
 let registros = [];
+let indiceEmEdicao = null; // IA
+let salvarTimeout = null; // IA
 
 // Atualiza o relógio em tempo real
 function atualizarRelogio() {
     const agora = new Date();
     const horaFormatada = agora.toLocaleTimeString('pt-BR');
     horarioAtual.textContent = horaFormatada;
+
+    // Atualiza o saldo em tempo real
+    calcularSaldoHoras();
 }
 
 // Formata a data para exibição
@@ -66,17 +71,25 @@ function adicionarRegistro(tipo = null, descricao = '') {
     };
     
     registros.push(registro);
-    salvarRegistros();
+    salvarRegistrosDebounce();
     atualizarListaRegistros();
     atualizarTextoBotao();
     
 }
 
 // Salva os registros no localStorage
-function salvarRegistros() {
+function salvarRegistrosDireto() {
     const hoje = new Date().toISOString().split('T')[0];
     const chave = `ponto_eletronico_${hoje}`;
     localStorage.setItem(chave, JSON.stringify(registros));
+}
+
+// Salva os registros com debounce
+function salvarRegistrosDebounce() {
+    clearTimeout(salvarTimeout);
+    salvarTimeout = setTimeout(() => {
+        salvarRegistrosDireto();
+    }, 500); // 500ms = meio segundo de atraso
 }
 
 // Carrega os registros do localStorage
@@ -152,63 +165,76 @@ function atualizarListaRegistros() {
 // Abre o modal para edição do registro
 function abrirModalEdicao(index) {
     const registro = registros[index];
-    const modalEdicao = document.getElementById('modalEdicao');
     const dataHoraInput = document.getElementById('dataHoraEdicao');
     const descricaoEdicao = document.getElementById('descricaoEdicao');
-    const salvarEdicao = document.getElementById('salvarEdicao');
-    const cancelarEdicao = document.getElementById('cancelarEdicao');
     
     // Formata a data para o input datetime-local
     const dataHora = new Date(registro.dataHora);
-    const timezoneOffset = dataHora.getTimezoneOffset() * 60000; // em milissegundos
+    const timezoneOffset = dataHora.getTimezoneOffset() * 60000; 
     const localISOTime = (new Date(dataHora - timezoneOffset)).toISOString().slice(0, 16);
     
     dataHoraInput.value = localISOTime;
     descricaoEdicao.value = registro.descricao;
-    
-    // Remove eventos anteriores para evitar duplicação
-    const novaSalvarEdicao = salvarEdicao.cloneNode(true);
-    const novoCancelarEdicao = cancelarEdicao.cloneNode(true);
-    
-    salvarEdicao.parentNode.replaceChild(novaSalvarEdicao, salvarEdicao);
-    cancelarEdicao.parentNode.replaceChild(novoCancelarEdicao, cancelarEdicao);
-    
-    // Adiciona os novos eventos
-    novaSalvarEdicao.addEventListener('click', () => {
-        const novaDataHora = new Date(dataHoraInput.value);
-        const novaDescricao = descricaoEdicao.value.trim();
-        
-        if (novaDescricao) {
-            editarRegistro(index, novaDataHora, novaDescricao);
-            modalEdicao.style.display = 'none';
-        } else {
-            alert('Por favor, preencha a descrição.');
-        }
-    });
-    
-    novoCancelarEdicao.addEventListener('click', () => {
-        modalEdicao.style.display = 'none';
-    });
-    
+
+    // Define o índice em edição
+    indiceEmEdicao = index;
+
+    // Exibe o modal
     modalEdicao.style.display = 'block';
     descricaoEdicao.focus();
 }
 
+document.getElementById('salvarEdicao').addEventListener('click', () => {
+    if (indiceEmEdicao === null) return;
+
+    const dataHoraInput = document.getElementById('dataHoraEdicao');
+    const descricaoEdicao = document.getElementById('descricaoEdicao');
+
+    const novaDataHora = new Date(dataHoraInput.value);
+    const novaDescricao = descricaoEdicao.value.trim();
+
+    if (novaDescricao) {
+        editarRegistro(indiceEmEdicao, novaDataHora, novaDescricao);
+        modalEdicao.style.display = 'none';
+        indiceEmEdicao = null; // Reseta
+    } else {
+        alert('Por favor, preencha a descrição.');
+    }
+});
+
+document.getElementById('cancelarEdicao').addEventListener('click', () => {
+    modalEdicao.style.display = 'none';
+    indiceEmEdicao = null;
+});
+
 // Edita um registro existente
 function editarRegistro(index, novaDataHora, novaDescricao) {
+// Garante que a data é válida (IA)
+    if (isNaN(novaDataHora.getTime())) {
+        alert('Data/hora inválida.');
+        return;
+    }
+
     registros[index] = {
         dataHora: novaDataHora,
         tipo: registros[index].tipo,
         descricao: novaDescricao
     };
-    salvarRegistros();
+
+    // Reatribui os tipos de forma sequencial para manter consistência (IA)
+    const tiposSequenciais = ['Primeira Entrada', 'Primeira Saída', 'Segunda Entrada', 'Segunda Saída'];
+    registros.forEach((reg, i) => {
+        reg.tipo = tiposSequenciais[i % tiposSequenciais.length];
+    });
+
+    salvarRegistrosDebounce();
     atualizarListaRegistros();
 }
 
 // Exclui um registro
 function excluirRegistro(index) {
     registros.splice(index, 1);
-    salvarRegistros();
+    salvarRegistrosDebounce();
     atualizarListaRegistros();
 }
 
@@ -357,7 +383,3 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(atualizarRelogio, 1000);
     atualizarRelogio();
 });
-
-// Inicialização
-setInterval(atualizarRelogio, 1000);
-atualizarRelogio();
