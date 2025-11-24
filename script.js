@@ -30,10 +30,10 @@ function formatarDataHora(data) {
 // Determina o próximo tipo de registro com base no último registro
 function determinarProximoTipo() {
     if (registros.length === 0) return 'Primeira Entrada';
-    
+
     const ultimoRegistro = registros[registros.length - 1].tipo;
-    
-    switch(ultimoRegistro) {
+
+    switch (ultimoRegistro) {
         case 'Primeira Entrada': return 'Primeira Saída';
         case 'Primeira Saída': return 'Segunda Entrada';
         case 'Segunda Entrada': return 'Segunda Saída';
@@ -46,9 +46,9 @@ function determinarProximoTipo() {
 function atualizarTextoBotao() {
     const proximoTipo = determinarProximoTipo();
     registrarPontoBtn.textContent = `Registrar ${proximoTipo}`;
-    
+
     // Atualiza a classe do botão para refletir se é entrada ou saída
-    registrarPontoBtn.className = 'btn-registrar ' + 
+    registrarPontoBtn.className = 'btn-registrar ' +
         (proximoTipo.includes('Entrada') ? 'entrada' : 'saida');
 }
 
@@ -56,25 +56,25 @@ function atualizarTextoBotao() {
 function adicionarRegistro(tipo = null, descricao = '') {
     const proximoTipo = tipo || determinarProximoTipo();
     const agora = new Date();
-    
+
     // Se for o primeiro registro do dia, limpa registros antigos
     if (registros.length === 0) {
         const hoje = new Date().toISOString().split('T')[0];
         const chave = `ponto_eletronico_${hoje}`;
         localStorage.setItem(chave, JSON.stringify([]));
     }
-    
+
     const registro = {
         dataHora: agora,
         tipo: proximoTipo,
         descricao: descricao || proximoTipo
     };
-    
+
     registros.push(registro);
     salvarRegistrosDebounce();
     atualizarListaRegistros();
     atualizarTextoBotao();
-    
+
 }
 
 // Salva os registros no localStorage
@@ -97,7 +97,7 @@ function carregarRegistros() {
     const hoje = new Date().toISOString().split('T')[0];
     const chave = `ponto_eletronico_${hoje}`;
     const registrosSalvos = localStorage.getItem(chave);
-    
+
     if (registrosSalvos) {
         registros = JSON.parse(registrosSalvos).map(reg => ({
             ...reg,
@@ -105,7 +105,7 @@ function carregarRegistros() {
         }));
         atualizarListaRegistros();
     }
-    
+
     // Atualiza o texto do botão ao carregar os registros
     atualizarTextoBotao();
 }
@@ -113,13 +113,13 @@ function carregarRegistros() {
 // Atualiza a lista de registros na tela
 function atualizarListaRegistros() {
     listaRegistros.innerHTML = '';
-    
+
     if (registros.length === 0) {
         listaRegistros.innerHTML = '<p>Nenhum registro encontrado para hoje.</p>';
         calcularSaldoHoras(); // Atualiza o saldo mesmo sem registros
         return;
     }
-    
+
     registros.forEach((registro, index) => {
         const item = document.createElement('div');
         item.className = 'registro-item';
@@ -167,12 +167,12 @@ function abrirModalEdicao(index) {
     const registro = registros[index];
     const dataHoraInput = document.getElementById('dataHoraEdicao');
     const descricaoEdicao = document.getElementById('descricaoEdicao');
-    
+
     // Formata a data para o input datetime-local
     const dataHora = new Date(registro.dataHora);
-    const timezoneOffset = dataHora.getTimezoneOffset() * 60000; 
+    const timezoneOffset = dataHora.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(dataHora - timezoneOffset)).toISOString().slice(0, 16);
-    
+
     dataHoraInput.value = localISOTime;
     descricaoEdicao.value = registro.descricao;
 
@@ -209,7 +209,7 @@ document.getElementById('cancelarEdicao').addEventListener('click', () => {
 
 // Edita um registro existente
 function editarRegistro(index, novaDataHora, novaDescricao) {
-// Garante que a data é válida (IA)
+    // Garante que a data é válida (IA)
     if (isNaN(novaDataHora.getTime())) {
         alert('Data/hora inválida.');
         return;
@@ -238,35 +238,20 @@ function excluirRegistro(index) {
     atualizarListaRegistros();
 }
 
-// Função para calcular o saldo de horas
-function calcularSaldoHoras() {
-    const sugestaoSaidaElement = document.getElementById('sugestaoSaida');
-    const oitoHorasMs = 8 * 60 * 60 * 1000; // 8 horas em milissegundos
-    
-    // Ordena os registros por data/hora
-    const registrosOrdenados = [...registros].sort((a, b) => a.dataHora - b.dataHora);
-    
-    // Filtra apenas os registros de entrada/saída
-    const registrosPonto = registrosOrdenados.filter(reg => 
-        ['Primeira Entrada', 'Primeira Saída', 'Segunda Entrada', 'Segunda Saída'].includes(reg.tipo)
-    );
-    
-    // Se não há registros suficientes, retorna
-    if (registrosPonto.length < 2) {
-        saldoHorasElement.textContent = '--:--';
-        saldoHorasElement.className = '';
-        sugestaoSaidaElement.textContent = '';
-        return;
-    }
-    
-    // Calcula o tempo trabalhado
+// Função auxiliar para calcular o tempo trabalhado
+function calcularTempoTrabalhado(listaRegistros) {
     let tempoTrabalhadoMs = 0;
     let ultimoTipo = '';
     let ultimoHorario = null;
-    
-    // Array para armazenar os períodos trabalhados
-    const periodosTrabalhados = [];
-    
+
+    // Ordena os registros por data/hora
+    const registrosOrdenados = [...listaRegistros].sort((a, b) => a.dataHora - b.dataHora);
+
+    // Filtra apenas os registros de entrada/saída
+    const registrosPonto = registrosOrdenados.filter(reg =>
+        ['Primeira Entrada', 'Primeira Saída', 'Segunda Entrada', 'Segunda Saída'].includes(reg.tipo)
+    );
+
     registrosPonto.forEach(registro => {
         if (registro.tipo === 'Primeira Entrada' || registro.tipo === 'Segunda Entrada') {
             ultimoHorario = registro.dataHora;
@@ -275,33 +260,65 @@ function calcularSaldoHoras() {
             if (ultimoHorario) {
                 const periodo = registro.dataHora - ultimoHorario;
                 tempoTrabalhadoMs += periodo;
-                periodosTrabalhados.push({ inicio: ultimoHorario, fim: registro.dataHora });
                 ultimoHorario = null;
                 ultimoTipo = 'saida';
             }
         }
     });
-    
+
     // Se está em um período de trabalho ativo (entrada sem saída)
     if (ultimoHorario && ultimoTipo === 'entrada') {
         const agora = new Date();
         const periodoAtual = agora - ultimoHorario;
         tempoTrabalhadoMs += periodoAtual;
-        periodosTrabalhados.push({ inicio: ultimoHorario, fim: agora });
     }
-    
+
+    return { tempoTrabalhadoMs, ultimoHorario, ultimoTipo };
+}
+
+// Função para calcular o saldo de horas
+function calcularSaldoHoras() {
+    const sugestaoSaidaElement = document.getElementById('sugestaoSaida');
+    const oitoHorasMs = 8 * 60 * 60 * 1000; // 8 horas em milissegundos
+
+    // Ordena os registros por data/hora
+    const registrosOrdenados = [...registros].sort((a, b) => a.dataHora - b.dataHora);
+
+    // Filtra apenas os registros de entrada/saída
+    const registrosPonto = registrosOrdenados.filter(reg =>
+        ['Primeira Entrada', 'Primeira Saída', 'Segunda Entrada', 'Segunda Saída'].includes(reg.tipo)
+    );
+
+    // Se não há registros suficientes, retorna
+    if (registrosPonto.length < 2) {
+        saldoHorasElement.textContent = '--:--';
+        saldoHorasElement.className = '';
+        sugestaoSaidaElement.textContent = '';
+        return;
+    }
+
+    // Calcula o tempo trabalhado usando a função auxiliar
+    const dadosCalculados = calcularTempoTrabalhado(registros);
+    const tempoTrabalhadoMs = dadosCalculados.tempoTrabalhadoMs;
+    const ultimoHorario = dadosCalculados.ultimoHorario;
+    const ultimoTipo = dadosCalculados.ultimoTipo;
+
+    // Recria periodosTrabalhados apenas para a lógica de sugestão (se necessário) ou simplifica
+    // Para manter a lógica original da sugestão de saída, precisamos saber se estamos trabalhando
+    // A função auxiliar já retorna ultimoHorario e ultimoTipo que é o que precisamos para saber se está ativo
+
     // Calcula o saldo
     const saldoMs = tempoTrabalhadoMs - oitoHorasMs;
-    
+
     // Formata o saldo
     const horas = Math.floor(Math.abs(saldoMs) / (1000 * 60 * 60));
     const minutos = Math.floor((Math.abs(saldoMs) % (1000 * 60 * 60)) / (1000 * 60));
     const sinal = saldoMs >= 0 ? '+' : '-';
     const saldoFormatado = `${sinal}${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
-    
+
     // Atualiza o elemento de saldo
     saldoHorasElement.textContent = saldoFormatado;
-    
+
     // Aplica a classe de estilo apropriada
     saldoHorasElement.className = '';
     if (saldoMs > 0) {
@@ -311,18 +328,18 @@ function calcularSaldoHoras() {
     } else {
         saldoHorasElement.classList.add('saldo-zerado');
     }
-    
+
     // Calcula e exibe a sugestão de saída
-    if (periodosTrabalhados.length > 0 && ultimoHorario && ultimoTipo === 'entrada') {
+    if (ultimoHorario && ultimoTipo === 'entrada') {
         // Tempo restante para completar 8 horas
         const tempoRestanteMs = Math.max(0, oitoHorasMs - tempoTrabalhadoMs);
-        
+
         if (tempoRestanteMs > 0) {
             // Calcula a hora de saída sugerida
             const agora = new Date();
             const horaSugerida = new Date(agora.getTime() + tempoRestanteMs);
             const horaFormatada = horaSugerida.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            
+
             sugestaoSaidaElement.textContent = `Sugestão de saída: ${horaFormatada} (8h completas)`;
         } else {
             sugestaoSaidaElement.textContent = 'Já completou as 8h de trabalho';
@@ -338,14 +355,31 @@ function exportarParaTxt() {
         alert('Não há registros para exportar!');
         return;
     }
-    
+
     let conteudo = 'Registros de Ponto Eletrônico\n';
     conteudo += 'Data: ' + new Date().toLocaleDateString('pt-BR') + '\n\n';
-    
+
     registros.forEach(registro => {
         conteudo += `${registro.dataHora.toLocaleString('pt-BR')} - ${registro.descricao}\n`;
     });
-    
+
+    // Adiciona o resumo das horas
+    const { tempoTrabalhadoMs } = calcularTempoTrabalhado(registros);
+    const horasTrabalhadas = Math.floor(tempoTrabalhadoMs / (1000 * 60 * 60));
+    const minutosTrabalhados = Math.floor((tempoTrabalhadoMs % (1000 * 60 * 60)) / (1000 * 60));
+    const totalFormatado = `${horasTrabalhadas.toString().padStart(2, '0')}:${minutosTrabalhados.toString().padStart(2, '0')}`;
+
+    conteudo += `\nTotal de horas: ${totalFormatado}\n`;
+
+    const oitoHorasMs = 8 * 60 * 60 * 1000;
+    if (tempoTrabalhadoMs > oitoHorasMs) {
+        conteudo += 'Status: Acima de 8 horas diárias';
+    } else if (tempoTrabalhadoMs < oitoHorasMs) {
+        conteudo += 'Status: Abaixo de 8 horas diárias';
+    } else {
+        conteudo += 'Status: Exatamente 8 horas diárias';
+    }
+
     const blob = new Blob([conteudo], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
