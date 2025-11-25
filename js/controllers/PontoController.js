@@ -261,10 +261,21 @@ export class PontoController {
             const [ano, mes, dia] = data.split('-');
             const dataFormatada = `${dia}/${mes}/${ano}`;
 
+            // Busca os registros do dia para mostrar os horários
+            const registrosDia = this.service.obterRegistrosDia(data);
+            const horariosFormatados = registrosDia
+                .map(r => new Date(r.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+                .join(', ');
+
             item.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" class="check-dia" value="${data}">
-                    <span style="font-weight: bold;">${dataFormatada}</span>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" class="check-dia" value="${data}">
+                        <span style="font-weight: bold;">${dataFormatada}</span>
+                    </div>
+                    <div style="font-size: 0.9em; color: #666; margin-left: 25px;">
+                        ${horariosFormatados}
+                    </div>
                 </div>
                 <div class="acoes">
                     <button class="btn-exportar-dia" data-dia="${data}" title="Exportar TXT">

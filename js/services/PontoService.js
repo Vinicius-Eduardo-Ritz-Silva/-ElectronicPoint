@@ -143,6 +143,10 @@ export class PontoService {
         return this.repository.listarDias();
     }
 
+    obterRegistrosDia(data) {
+        return this.repository.carregarDia(data);
+    }
+
     excluirDias(datas) {
         datas.forEach(data => this.repository.excluirDia(data));
 
