@@ -26,4 +26,36 @@ export class PontoRepository {
     limpar() {
         localStorage.setItem(this.storageKey, JSON.stringify([]));
     }
+
+    listarDias() {
+        const dias = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('ponto_eletronico_')) {
+                const data = key.replace('ponto_eletronico_', '');
+                dias.push(data);
+            }
+        }
+        return dias.sort().reverse(); // Mais recentes primeiro
+    }
+
+    carregarDia(data) {
+        const chave = `ponto_eletronico_${data}`;
+        const registrosSalvos = localStorage.getItem(chave);
+        if (!registrosSalvos) return [];
+
+        return JSON.parse(registrosSalvos).map(reg => 
+            new Registro(reg.dataHora, reg.tipo, reg.descricao)
+        );
+    }
+
+    excluirDia(data) {
+        const chave = `ponto_eletronico_${data}`;
+        localStorage.removeItem(chave);
+    }
+
+    limparTudo() {
+        const dias = this.listarDias();
+        dias.forEach(dia => this.excluirDia(dia));
+    }
 }

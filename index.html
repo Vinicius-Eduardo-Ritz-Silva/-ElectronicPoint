@@ -49,6 +49,26 @@
             <h2>Registros de Hoje</h2>
             <div id="listaRegistros"></div>
             <button id="exportarTxt">Exportar para TXT</button>
+            <button id="abrirHistorico" class="btn-historico"
+                style="margin-top: 10px; background-color: #3498db;">Histórico</button>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico -->
+    <div id="modalHistorico" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close close-historico">&times;</span>
+            <h3>Histórico de Registros</h3>
+
+            <div class="acoes-historico" style="margin-bottom: 15px; display: flex; gap: 10px;">
+                <button id="excluirSelecionados" class="btn-excluir" style="display: none;">Excluir
+                    Selecionados</button>
+                <button id="limparHistorico" class="btn-excluir" style="background-color: #c0392b;">Limpar Tudo</button>
+            </div>
+
+            <div id="listaHistorico" class="lista-historico" style="max-height: 400px; overflow-y: auto;">
+                <!-- Lista de dias será inserida aqui via JS -->
+            </div>
         </div>
     </div>
 
