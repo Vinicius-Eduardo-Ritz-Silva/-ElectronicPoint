@@ -70,7 +70,7 @@ button:hover {
 #registrarPonto.entrada:hover {
     background-color: #27ae60;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 #registrarPonto.saida {
@@ -80,14 +80,14 @@ button:hover {
 #registrarPonto.saida:hover {
     background-color: #c0392b;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .registros {
     background-color: white;
     padding: 20px;
     border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .registros h2 {
@@ -127,6 +127,19 @@ button:hover {
     background-color: #d35400;
 }
 
+#abrirHistorico {
+    display: block;
+    box-sizing: border-box;
+    margin-top: 10px;
+    width: 100%;
+    background-color: #3498db;
+    text-align: center;
+}
+
+#abrirHistorico:hover {
+    background-color: #2980b9;
+}
+
 /* Modal */
 .modal {
     display: none;
@@ -136,7 +149,7 @@ button:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {

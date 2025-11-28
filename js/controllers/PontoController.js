@@ -20,6 +20,14 @@ export class PontoController {
         this.salvarEdicaoBtn = document.getElementById('salvarEdicao');
         this.cancelarEdicaoBtn = document.getElementById('cancelarEdicao');
 
+        // Elementos do Histórico
+        this.btnAbrirHistorico = document.getElementById('abrirHistorico');
+        this.modalHistorico = document.getElementById('modalHistorico');
+        this.closeModalHistorico = document.querySelector('.close-historico');
+        this.listaHistorico = document.getElementById('listaHistorico');
+        this.btnExcluirSelecionados = document.getElementById('excluirSelecionados');
+        this.btnLimparHistorico = document.getElementById('limparHistorico');
+
         this._inicializarEventos();
         this._iniciarRelogio();
         this.atualizarView();
@@ -33,9 +41,18 @@ export class PontoController {
         this.cancelarEdicaoBtn.addEventListener('click', () => this.fecharModal());
         this.salvarEdicaoBtn.addEventListener('click', () => this.salvarEdicao());
 
+        // Eventos do Histórico
+        this.btnAbrirHistorico.addEventListener('click', () => this.abrirHistorico());
+        this.closeModalHistorico.addEventListener('click', () => this.fecharModalHistorico());
+        this.btnLimparHistorico.addEventListener('click', () => this.limparHistorico());
+        this.btnExcluirSelecionados.addEventListener('click', () => this.excluirSelecionados());
+
         window.addEventListener('click', (event) => {
             if (event.target === this.modalEdicao) {
                 this.fecharModal();
+            }
+            if (event.target === this.modalHistorico) {
+                this.fecharModalHistorico();
             }
         });
     }
@@ -206,5 +223,130 @@ export class PontoController {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    // --- Métodos do Histórico ---
+
+    abrirHistorico() {
+        this.renderizarHistorico();
+        this.modalHistorico.style.display = 'block';
+    }
+
+    fecharModalHistorico() {
+        this.modalHistorico.style.display = 'none';
+    }
+
+    renderizarHistorico() {
+        this.listaHistorico.innerHTML = '';
+        const dias = this.service.obterHistorico();
+
+        if (dias.length === 0) {
+            this.listaHistorico.innerHTML = '<p>Nenhum histórico encontrado.</p>';
+            this.btnLimparHistorico.style.display = 'none';
+            return;
+        }
+
+        this.btnLimparHistorico.style.display = 'inline-block';
+
+        dias.forEach(data => {
+            const item = document.createElement('div');
+            item.className = 'historico-item';
+            item.style.display = 'flex';
+            item.style.justifyContent = 'space-between';
+            item.style.alignItems = 'center';
+            item.style.padding = '10px';
+            item.style.borderBottom = '1px solid #eee';
+
+            // Formata data (YYYY-MM-DD -> DD/MM/YYYY)
+            const [ano, mes, dia] = data.split('-');
+            const dataFormatada = `${dia}/${mes}/${ano}`;
+
+            // Busca os registros do dia para mostrar os horários
+            const registrosDia = this.service.obterRegistrosDia(data);
+            const horariosFormatados = registrosDia
+                .map(r => new Date(r.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }))
+                .join(', ');
+
+            item.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" class="check-dia" value="${data}">
+                        <span style="font-weight: bold;">${dataFormatada}</span>
+                    </div>
+                    <div style="font-size: 0.9em; color: #666; margin-left: 25px;">
+                        ${horariosFormatados}
+                    </div>
+                </div>
+                <div class="acoes">
+                    <button class="btn-exportar-dia" data-dia="${data}" title="Exportar TXT">
+                        <i class="fas fa-file-export"></i>
+                    </button>
+                    <button class="btn-excluir-dia" data-dia="${data}" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            // Listeners
+            item.querySelector('.btn-exportar-dia').addEventListener('click', () => this.exportarDia(data));
+            item.querySelector('.btn-excluir-dia').addEventListener('click', () => this.excluirDia(data));
+            item.querySelector('.check-dia').addEventListener('change', () => this.atualizarBotaoExcluirSelecionados());
+
+            this.listaHistorico.appendChild(item);
+        });
+    }
+
+    atualizarBotaoExcluirSelecionados() {
+        const selecionados = document.querySelectorAll('.check-dia:checked');
+        if (selecionados.length > 0) {
+            this.btnExcluirSelecionados.style.display = 'inline-block';
+            this.btnExcluirSelecionados.textContent = `Excluir Selecionados (${selecionados.length})`;
+        } else {
+            this.btnExcluirSelecionados.style.display = 'none';
+        }
+    }
+
+    exportarDia(data) {
+        const conteudo = this.service.exportarDia(data);
+        if (!conteudo) return;
+
+        const blob = new Blob([conteudo], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ponto_eletronico_${data}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    excluirDia(data) {
+        if (confirm('Tem certeza que deseja excluir o registro deste dia?')) {
+            this.service.excluirDias([data]);
+            this.renderizarHistorico();
+            this.atualizarView(); // Atualiza a tela principal caso tenha excluído o dia atual
+        }
+    }
+
+    excluirSelecionados() {
+        const checkboxes = document.querySelectorAll('.check-dia:checked');
+        const dias = Array.from(checkboxes).map(cb => cb.value);
+
+        if (confirm(`Tem certeza que deseja excluir ${dias.length} dias selecionados?`)) {
+            this.service.excluirDias(dias);
+            this.renderizarHistorico();
+            this.atualizarView();
+            this.btnExcluirSelecionados.style.display = 'none';
+        }
+    }
+
+    limparHistorico() {
+        if (confirm('ATENÇÃO: Isso apagará TODOS os registros de TODOS os dias. Deseja continuar?')) {
+            const dias = this.service.obterHistorico();
+            this.service.excluirDias(dias);
+            this.renderizarHistorico();
+            this.atualizarView();
+        }
     }
 }
